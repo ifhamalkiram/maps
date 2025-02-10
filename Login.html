@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      background: linear-gradient(135deg, #74ebd5, #acb6e5);
+      font-family: 'Arial', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .login-container, .welcome-container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      width: 300px;
+      animation: fadeIn 1.5s ease;
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"], input[type="password"] {
+      width: 90%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      transition: 0.3s;
+    }
+
+    button {
+      background: #74ebd5;
+      color: #fff;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #5ac8b0;
+    }
+
+    .loading-spinner {
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #74ebd5;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto 10px;
+      display: none;
+    }
+
+    .please-wait {
+      font-size: 14px;
+      color: #555;
+      display: none;
+    }
+
+    .welcome-message {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .map-container {
+  width: 100%;               /* Lebar penuh */
+  height: 90vh;              /* 90% dari tinggi layar */
+  margin: 0;
+  padding: 0;
+  display: none;             /* Tetap disembunyikan sebelum login */
+  animation: fadeIn 1s ease-in-out;
+}
+
+iframe {
+  width: 100%;               /* Lebar penuh */
+  height: 100%;              /* Tinggi penuh dari .map-container */
+  border: none;
+}
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container" id="loginForm">
+    <h2>🔐 Login</h2>
+    <input type="text" id="username" placeholder="Username" required><br>
+    <input type="password" id="password" placeholder="Password" required><br>
+    <button id="loginBtn" onclick="login()">Login</button>
+
+    <div class="loading-spinner" id="loadingSpinner"></div>
+    <div class="please-wait" id="pleaseWait">Please wait...</div>
+  </div>
+
+  <div class="welcome-container" id="welcomeContainer" style="display:none;">
+    <div class="welcome-message" id="welcomeMessage"></div>
+  </div>
+
+  <!-- Peta Google Maps -->
+  <div class="map-container" id="mapContainer">
+    <iframe id="mapIframe" src="" allowfullscreen></iframe>
+  </div>
+
+  <script>
+    document.addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+        login();
+      }
+    });
+
+    function login() {
+      var username = document.getElementById("username").value;
+      var password = document.getElementById("password").value;
+      var loginBtn = document.getElementById("loginBtn");
+      var spinner = document.getElementById("loadingSpinner");
+      var pleaseWait = document.getElementById("pleaseWait");
+
+      spinner.style.display = "block";
+      pleaseWait.style.display = "block";
+      loginBtn.disabled = true;
+
+      google.script.run.withSuccessHandler(function(response) {
+        spinner.style.display = "none";
+        pleaseWait.style.display = "none";
+        loginBtn.disabled = false;
+
+        if (response.success) {
+          document.getElementById("loginForm").style.display = "none";
+          var welcomeContainer = document.getElementById("welcomeContainer");
+          var welcomeMessage = document.getElementById("welcomeMessage");
+          var mapContainer = document.getElementById("mapContainer");
+          var mapIframe = document.getElementById("mapIframe");
+
+          welcomeContainer.style.display = "block";
+          welcomeMessage.innerText = "Selamat Datang, " + response.name + "!";
+
+          // Setelah 2 detik, hilangkan pesan selamat datang dan tampilkan peta
+          setTimeout(function() {
+            welcomeContainer.style.display = "none";
+            mapIframe.src = response.link;  // Mengambil link dari Google Sheets
+            mapContainer.style.display = "block";
+          }, 2000);
+
+        } else {
+          alert("❌ Username atau Password salah!");
+        }
+      }).checkLogin(username, password);
+    }
+  </script>
+</body>
+</html>
